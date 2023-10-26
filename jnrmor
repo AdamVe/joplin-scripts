@@ -193,6 +193,11 @@ function noConfigFound {
 	exit 1
 }
 
+function backupResource {
+	echo "Backing up $1"
+	cp $1 $2
+}
+
 # precedence of config files:
 # command line options
 # config file specified on the command line
@@ -285,10 +290,16 @@ if [ "$fflag" != "1" ]; then
 	fi
 fi
 
+RES_DIR=${JOPLIN_DIR}/resources
+BACKUP_DIR=${RES_DIR}/backup
+mkdir ${BACKUP_DIR}
+export -f backupResource
+
 for id in `sed 's/\s\+$//' $TMPFILE`
 do
 	curlCMD="curl -s -X DELETE http://localhost:${CLIPPER_PORT}/resources/${id}?token=${CLIPPER_TOKEN}"
 	debug "$curlCMD"
+	find $RES_DIR -maxdepth 1 -name "$id*" -exec bash -c "backupResource \"{}\" \"${BACKUP_DIR}\"" \;
 	infotext="Deleting resource id: $id"
 	info_n "$infotext"
 	if [ "$nflag" == "0" ]; then
